@@ -56,44 +56,10 @@ function [kappas, X] = NearestConic(v, sgn)
   
   ALMOST_ZERO = 1e-6;
   
-  % Compute Delta = b^2-4*a*c 
-  Delta = v(2)^2 - 4*v(1)*v(3);
-%  if abs(Delta / norm(v)^2) < ALMOST_ZERO
-%    v = v / norm(v);
-%    w = -N'*v / norm(N'*v);
-%    scale = 0.2; % arbitrary...
-%    
-%    if sgn > 0
-%      % y and w are known up to arbitrary scale:
-%      y2 = [0 1 0]'; y3 = [0 0 1]';
-%      
-%      norm_y2 = scale/1; norm_y3 = scale/2;
-%      norm_w2 = sqrt(1-norm_y2^2); norm_w3 = sqrt(1-norm_y3^2);
-%      lambda2 = -norm(N'*v)/norm_w2; lambda3 = -norm(N'*v)/norm_w3; 
-%      kappas = [lambda2/1, lambda3/2];
-%    
-%      y2 = norm_y2*y2; y2 = norm_y3*y3; 
-%      x2 = norm_w2*N*w + H*y2; x3 = norm_w3*N*w + H*y3; 
-%      X = [ x2, x3];
-%    else
-%        % y and w are known up to arbitrary scale:
-%      y = [1 0 0]';
-%      
-%      norm_y = scale/2;
-%      norm_w = sqrt(1-norm_y^2); 
-%      lambda = -norm(N'*v)/norm_w;
-%      kappas = [lambda/2];
-%    
-%      y = norm_y*y;
-%      x = norm_w*N*w + H*y;
-%      X = [ x];
-%    
-%    end
-%    return;
-%  end
-  
-  if abs(Delta) > ALMOST_ZERO, v = v / sqrt(abs(Delta)), end;
-    
+  % Compute |Delta| = |b^2-4*a*c|
+  absDelta = abs(v(2)^2 - 4*v(1)*v(3));
+  % Remove scale if it applies
+  if absDelta > ALMOST_ZERO, v = v / sqrt(absDelta), end;
   
   % The 3x3 vector C*H*v
   zeta = H'*v; 
