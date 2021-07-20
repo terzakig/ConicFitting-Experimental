@@ -1,9 +1,13 @@
 % Fit a conic to data points
-function [X, error] = FitConic(points, sgn)
+function [X, best_error] = FitConic(points, sgn, sqp_max_oteration, sqp_tolerance)
 
   % points: A 2xN or Nx2 array of points
   % sgn: -1 = ellipse, 0 = parabola, 1 = hyperbola.
-  
+  % sqp_max_iteration: Max. number of SQP iterations
+  % sqp_tolerance: 
+  if nargin < 4, sqp_tolerance = 1e-5; end;
+  if nargin < 3, sqp_max_iteration = 15; end;
+
   
   ALMOST_ZERO = 1e-5;
   
@@ -27,8 +31,33 @@ function [X, error] = FitConic(points, sgn)
   end
   
   % Now go through the null vectors
+  solutions = [];
+  best_error = +inf;
   for i = 9:-1:10-n
     u = U(:, i);
-    [K, X0] = NearestConic(u, sgn);
+    [K, X] = NearestConic(u, sgn);
+    
+    e = X(:, end);
+    [e_, step] = SolveConicSQP(Q, e0, sgn, sqp_max_iteration, sqp_tolerance );
+    error = e_'*Q*e_ / (e_'*e_);
+    if abs(error - best_error) < ALMOST_ZERO
+      X = [X, e_];
+    elseif error < best_error
+      X = e_;
+      best_error = error;
+    end
+  end
+  
+  c = 10-n-1;
+  while S(c, c) < best_error && c >0
+    [e_, step] = SolveConicSQP(Q, e0, sgn, sqp_max_iteration, sqp_tolerance );
+    error = e_'*Q*e_ / (e_'*e_);
+    if abs(error - best_error) < ALMOST_ZERO
+      X = [X, e_];
+    elseif error < best_error
+      X = e_;
+      best_error = error;
+    end
+    c = c - 1;
   end
 end
