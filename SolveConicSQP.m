@@ -58,6 +58,7 @@ function [e, step] = SolveConicSQP(Q, e0, sgn, maxIteration, tolerance )
   step= 1;
 
   % d. Loop
+  e = e0;
   while (delta_norm > tolerance) && (step < timeout)
     % Forming the linear system
     % The n-equations from the objective funtion
@@ -67,10 +68,10 @@ function [e, step] = SolveConicSQP(Q, e0, sgn, maxIteration, tolerance )
           sgn - e'*C*e ];
 
      
-    e_ = linsolve(w, g);
+    delta = linsolve(W, g);
     
-    delta_e = e_(1:6);
-    delta_norm = norm(e_);
+    delta_e = delta(1:6);
+    delta_norm = norm(delta);
     
     e = e + delta_e;
     
