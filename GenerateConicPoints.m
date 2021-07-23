@@ -12,11 +12,11 @@ function points = GenerateConicPoints(n, D, U, pos, std_noise, sgn)
     x_noise = normrnd(0, std_noise);
     y_noise = normrnd(0, std_noise);
     epsilon = [x_noise; y_noise];
-    if sgn == -1
+    if sgn < 0
       points(:, i) = pos +  D*U*[cos(theta); sin(theta)] + epsilon;
-    elseif sgn = 1
+    elseif sgn > 0
       points(:, i) = pos +  D*U*[sec(theta); tan(theta)] + epsilon;
-    elseif sgn == 0
+    else%if sgn == 0
       points(:, i) = pos +  D*U*[theta^2; 2*theta] + epsilon;
     end
   end

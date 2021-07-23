@@ -6,7 +6,7 @@ function [X, best_error] = FitConic(points, sgn, sqp_max_oteration, sqp_toleranc
   % sqp_max_iteration: Max. number of SQP iterations
   % sqp_tolerance: 
   if nargin < 4, sqp_tolerance = 1e-5; end;
-  if nargin < 3, sqp_max_iteration = 10; end;
+  if nargin < 3, sqp_max_iteration = 20; end;
 
   
   ALMOST_ZERO = 1e-5;
@@ -72,5 +72,18 @@ function [X, best_error] = FitConic(points, sgn, sqp_max_oteration, sqp_toleranc
       best_error = error;
     end
     c = c - 1;
+  end
+  
+  % Now we need to translate the conic back to mu
+  T = [eye(2), -mu; 0 0 1];
+  for i = 1:size(X, 2)
+    a = X(1, i); b = X(2, i); c = X(3, i); d = X(4, i); e = X(5, i); f = X(6, i);
+    W = T'*[ a b/2 d/2; b/2 c e/2; d/2 e/2 f]*T;
+    X(1, i) = W(1, 1);
+    X(2, i) = W(1, 2)*2;
+    X(3, i) = W(2, 2);
+    X(4, i) = W(1, 3)*2;
+    X(5, i) = W(2, 3)*2;
+    X(6, i) = W(3, 3);
   end
 end
