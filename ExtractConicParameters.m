@@ -33,7 +33,7 @@ function [R, A, B, pos] = ExtractConicParameters(conic)
     
   % Find r1 and r2 direction vectors as the eigenvectors of Q
   R = U;
-  if det(R) < 0, R(:, 2) = -R(:, 2), end; % make sure R is a rotation matrix 
+  %if det(R) < 0, R(:, 2) = -R(:, 2), end; % make sure R is a rotation matrix 
   
   % 1. The position
   %
@@ -49,7 +49,7 @@ function [R, A, B, pos] = ExtractConicParameters(conic)
     %
     % λ1*A^2 + 2*(λ1*pos'*r1+v'*r1)*A + f+v'*pos = 0 (ellipse - hyperbola A)
     % λ2*B^2 + 2*(λ2*pos'*r2+v'*r2)*B + f+v'*pos = 0 (ellipse B)
-    % (sqrt(2)*λ1 + λ2)*B^2 + 2*( (sqrt(2)*λ1*r1 + λ2*r2)'*pos + (sqrt(2)*r1 + r2)'*v)*B + f+v'*pos = 0 (hyperbola B)
+    % λ2*B^2 + 2*(λ2*pos + v)'*r2 + (sqrt(2)*r1 + r2)'*v)*B + pos'*v + 2*sqrt(2)*A*(λ1*pos + v)'*r1 + f = 0 (hyperbola B)
     % and choose the positive solutions
     %
     alpha1 = lambda1;
@@ -65,24 +65,29 @@ function [R, A, B, pos] = ExtractConicParameters(conic)
     else
       alpha2 = lambda2;  
       beta2 = 2*(lambda2*pos + v)'*r2;
-     gamma2 = pos'*v + 2*sqrt(2)*A*(lambda1*pos + v)'*r1 + f;
+      gamma2 = pos'*v + 2*sqrt(2)*A*(lambda1*pos + v)'*r1 + f;
     end
     
     D2 = beta2^2 - 4*alpha2*gamma2;
     B = abs(0.5*(-beta2 + sqrt(D2))/alpha2);
       
   else % B. Delta == 0, it's a parabola
+    % NOTE: The parametric equation of the parabola is:
+    %          x = A*theta^2 and y = B*theta   
+    %     or,  x = A*theta   and y = B*theta^2
+    %   
     if abs(lambda1) > ALMOST_ZERO
       pos = [ -v'*r1 / lambda1;...
-              -(-(v'*r1 / lambda1)^2 + f)/(v'*R(:,2) / lambda1)];
-      A = 1;
-      B = 1; % TODO: find this
+              ((v'*r1)^2/lambda1-f)/(2*v'*r2)];
+      B = abs(lambda1);
+      A = sqrt(2*abs(v'*r2)); 
     else
-      pos = [ -v'*r2 / lambda2;...
-              -(-(v'*r2 / lambda2)^2 + f)/(v'*R(:,1) / lambda2)];
-      A = 1;
-      B = 1; % TODO: find this    
+      pos = [ ((v'*r2)^2/lambda2-f)/(2*v'*r1);...
+              -v'*r2 / lambda2 ];
+      B = sqrt(2*abs(v'*r1));
+      A =  abs(lambda2) ; 
     end
+    pos = R*pos;
   end
   
 end
