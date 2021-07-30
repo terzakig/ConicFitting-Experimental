@@ -62,7 +62,7 @@ function [R, A, B, pos] = ExtractConicParameters(conic)
       alpha2 = lambda2;
       beta2 = 2*(lambda2*(pos'*r2) + (v'*r2));
       gamma2 = f + v'*pos;
-    else
+    else %if Delta > 0
       alpha2 = lambda2;  
       beta2 = 2*(lambda2*pos + v)'*r2;
       gamma2 = pos'*v + 2*sqrt(2)*A*(lambda1*pos + v)'*r1 + f;
@@ -72,21 +72,15 @@ function [R, A, B, pos] = ExtractConicParameters(conic)
     B = abs(0.5*(-beta2 + sqrt(D2))/alpha2);
       
   else % B. Delta == 0, it's a parabola
-    % NOTE: The parametric equation of the parabola is:
-    %          x = A*theta^2 and y = B*theta   
-    %     or,  x = A*theta   and y = B*theta^2
+    % NOTE #1: The parametric equation of the parabola is:
+    %         x = A*theta   and y = B*theta^2
     %   
-    if abs(lambda1) > ALMOST_ZERO
-      pos = [ -v'*r1 / lambda1;...
-              ((v'*r1)^2/lambda1-f)/(2*v'*r2)];
-      B = abs(lambda1);
-      A = sqrt(2*abs(v'*r2)); 
-    else
-      pos = [ ((v'*r2)^2/lambda2-f)/(2*v'*r1);...
-              -v'*r2 / lambda2 ];
-      B = sqrt(2*abs(v'*r1));
-      A =  abs(lambda2) ; 
-    end
+    % NOTE #2: The eigenvector r1 corresponds to the non-vanishing eigen-value of Q
+    %       Thus, r1 will ALWAYS be associated with the squared term and r2 with the linear term
+    pos = [ -v'*r1 / lambda1;...
+            ((v'*r1)^2/lambda1-f)/(2*v'*r2)];
+    B = -sign(v'*r2)*lambda1;
+    A = sqrt(2*abs(v'*r2)); 
     pos = R*pos;
   end
   
