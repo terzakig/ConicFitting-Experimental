@@ -1,8 +1,8 @@
 % Nearest point on hyperbola to a given point
-function [e, candidates] = NearestPointOnHyperbola(p, u, v, c)
+function [e, mindist, candidates] = NearestPointOnHyperbola(p, u, v, c)
 % p: 2D point
 % u, v: Scaled axes of the hyperbola), i.e. u = A*normalized(u) and v = B*normalized(v)
-% c: The center of thge ellipse
+% c: The center of the hyperbola (positio corresponding to the [0; 0] in local frame)
 
 ALMOST_ZERO = 1e-6;
 % computing coefficients of the quartic that yields the possible solutions

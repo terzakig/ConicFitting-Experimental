@@ -1,8 +1,8 @@
 % Nearest point on ellipse to a given point
-function [e, candidates] = NearestPointOnEllipse(p, u, v, c)
+function [e, mindist, candidates] = NearestPointOnEllipse(p, u, v, c)
 % p: 2D point
 % u, v: Scaled axes of the ellipse), i.e. u = A*normalized(u) and v = B*normalized(v)
-% c: The center of thge ellipse
+% c: The center of the ellipse (i.e., point [0; 0] in the local coordinate frame)
 
 ALMOST_ZERO = 1e-6;
 
