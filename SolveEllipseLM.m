@@ -1,9 +1,9 @@
 % Fit ellipse to data using the Levenberg - Marquadrt algorithm
 
-function [u, v, c] = SolveEllipseLM(u0, v0, c0, points, tolerance, max_iteration)
+function [u, v, c, sq_error] = SolveEllipseLM(u0, v0, c0, points, tolerance, max_iteration)
   
   if nargin < 6, max_iteration = 30; end;
-  if nargin < 5, tolerance = 1e-5; end;
+  if nargin < 5, tolerance = 1e-9; end;
     
   if size(points, 1) > 2, points = points'; end;  
   
@@ -12,8 +12,7 @@ function [u, v, c] = SolveEllipseLM(u0, v0, c0, points, tolerance, max_iteration
   s = -sign(u0(2)*v0(1)); 
   v = s*v0;
   u = u0;
-  U = [u, v];
-  
+  c = c0;
   [sq_error, points_on_ellipse] = SquaredError(u, s*v, c, points);
   stop = sq_error < tolerance;
   lambda = 0.001;
@@ -24,16 +23,17 @@ function [u, v, c] = SolveEllipseLM(u0, v0, c0, points, tolerance, max_iteration
     
     improvement = false;
     while ~improvement && ~stop
-      x_temp = inv(Omega + lambda*eye(4))*ksi;
-      u_temp = x_temp(1:2);
-      v_temp = x_temp(3:4);
-      c_temp = x_temp(5:6);
-      [sq_error_temp, temp_points_on_ellipse] = SquaredError(u, s*v, c, points);
+      delta_temp = inv(Omega + lambda*eye(4))*ksi;
+      u_temp = u + delta_temp(1:2);
+      v_temp = [-u_temp(2); u_temp(1)];
+      c_temp = c + delta_temp(3:4);
+      [sq_error_temp, temp_points_on_ellipse] = SquaredError(u_temp, s*v_temp, c_temp, points);
       if sq_error_temp < sq_error
         u = u_temp;
         v = v_temp;
         c = c_temp;
-        
+        sq_error = sq_error_temp;
+        points_on_ellipse = temp_points_on_ellipse;
         lambda = lambda / 10;
         improvement = true;
       else
@@ -45,7 +45,7 @@ function [u, v, c] = SolveEllipseLM(u0, v0, c0, points, tolerance, max_iteration
       end
     end
   end
-  
+  v = s*v;
 end
 
 % Compute nearest poinst and squared error
@@ -64,7 +64,7 @@ end
 
 % Return Fihser partamers for a given conic and points
 function [Omega, ksi] = FisherParameters(u, v, s, c, data_points, points_on_ellipse)
-  n = size(points, 2);
+  n = size(data_points, 2);
   
   Omega = zeros(4);
   ksi = zeros(4, 1);
@@ -75,7 +75,7 @@ function [Omega, ksi] = FisherParameters(u, v, s, c, data_points, points_on_elli
     data_point = data_points(:, i);
     [Df, f] = EllipseJacobian(u, v, s, c, ellipse_point, data_point);
     Omega = Omega + Df'*Df;
-    ksi = ksi + Df'*f;
+    ksi = ksi - Df'*f;
   end
 end
 

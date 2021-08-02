@@ -1,13 +1,17 @@
 % Fit a conic to data points
-function [X, best_error] = FitConic(points, sgn, sqp_max_oteration, sqp_tolerance)
+function [X, best_error] = FitConic(points, sgn, max_iteration, tolerance, useSQP)
 
   % points: A 2xN or Nx2 array of points
   % sgn: -1 = ellipse, 0 = parabola, 1 = hyperbola.
   % sqp_max_iteration: Max. number of SQP iterations
   % sqp_tolerance: 
-  if nargin < 4, sqp_tolerance = 1e-5; end;
-  if nargin < 3, sqp_max_iteration = 20; end;
-
+  if nargin < 5, useSQP = true; end;
+  if nargin < 4
+    if useSQP tolerance = 1e-5; else, tolerance = 1e-9; end;  
+  end
+  if nargin < 3
+    if useSQP, max_iteration = 20; else, max_iteration = 30; end;
+  end
   
   ALMOST_ZERO = 1e-5;
   
@@ -41,12 +45,18 @@ function [X, best_error] = FitConic(points, sgn, sqp_max_oteration, sqp_toleranc
     
     e = X(:, end);
     Delta = u(2)^2-4*u(1)*u(3);
-    if ( sgn ~= 0 && Delta*sgn < 0 ) || (Delta ~= sgn && sgn == 0)
-      [e_, step] = SolveConicSQP(Q, e, sgn, sqp_max_iteration, sqp_tolerance );
-    else
-      e_ = e;
+    if useSQP
+      if ( sgn ~= 0 && Delta*sgn < 0 ) || (Delta ~= sgn && sgn == 0)
+        [e_, step] = SolveConicSQP(Q, e, sgn, max_iteration, tolerance );
+      else
+        e_ = e;
+      end
+      error = e_'*Q*e_ / (e_'*e_);
+    else % Run Levenberg - Marquardt
+      [U, A, B, pos] = ExtractConicParameters(e);
+      [u_, v_, pos_, error] = SolveEllipseLM(A*U(:, 1), B*U(:, 2), pos, pts, tolerance, max_iteration);
+      e_ = EllipseParametersToCoefs(u_, v_, pos_);
     end
-    error = e_'*Q*e_ / (e_'*e_);
     if abs(error - best_error) < ALMOST_ZERO
       X = [X, e_];
     elseif error < best_error
@@ -57,14 +67,22 @@ function [X, best_error] = FitConic(points, sgn, sqp_max_oteration, sqp_toleranc
   
   c = 6-n-1;
   while S(c, c) < best_error && c >0
+    u = U(:, c);
+    [K, X] = NearestConic(u, sgn);
+    e = X(:, end);
     Delta = e(2)^2-4*e(1)*e(3);
-    if ( sgn ~= 0 && Delta*sgn < 0 ) || (Delta ~= sgn && sgn == 0)
-      [e_, step] = SolveConicSQP(Q, e, sgn, sqp_max_iteration, sqp_tolerance );
-    else
-      e_ = e;
+    if useSQP
+      if ( sgn ~= 0 && Delta*sgn < 0 ) || (Delta ~= sgn && sgn == 0)
+        [e_, step] = SolveConicSQP(Q, e, sgn, max_iteration, tolerance );
+      else
+        e_ = e;
+      end
+      error = e_'*Q*e_ / (e_'*e_);
+    else % use LM and unbiased error
+      [U, A, B, pos] = ExtractConicParameters(e);
+      [u_, v_, pos_, error] = SolveEllipseLM(A*U(:, 1), B*U(:, 2), pos, pts, tolerance, max_iteration);
+      e_ = EllipseParametersToCoefs(u_, v_, pos_);
     end
-    
-    error = e_'*Q*e_ / (e_'*e_);
     if abs(error - best_error) < ALMOST_ZERO
       X = [X, e_];
     elseif error < best_error

@@ -30,8 +30,8 @@ for i = 1:4
     candidates = [candidates, m];
     dist = norm(m-p);
     if (dist < mindist)
-      mindist = dist
-      e = m
+      mindist = dist;
+      e = m;
     end
    end  
 end 
